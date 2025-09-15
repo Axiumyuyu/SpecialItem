@@ -1,0 +1,14 @@
+name: SpecialItem
+version: '1.0.0'
+main: me.axiumyu.specialItem.SpecialItem
+api-version: '1.21'
+author: AxiumYu
+depend: [XConomy]
+libraries:
+  - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0'
+description: A plugin for creating upgradeable special items.
+commands:
+  specialitem:
+    description: Main command for the SpecialItems plugin.
+    usage: /<command> [get|transfer|upgrade] <id> [confirm]
+    aliases: [si]
