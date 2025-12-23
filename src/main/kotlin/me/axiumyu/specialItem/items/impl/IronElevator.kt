@@ -24,7 +24,7 @@ import kotlin.random.Random
 class IronElevator : SpecialItemBase() {
     companion object {
         @JvmField
-        val SAFE_BLOCK: Set<Material> = setOf(
+        val SAFE_BLOCK = hashSetOf(
             WATER,
             WHITE_CARPET,
             LIGHT_GRAY_CARPET,
@@ -99,11 +99,13 @@ class IronElevator : SpecialItemBase() {
     fun onUse(event: PlayerInteractEvent) {
         val pl = event.player
         val item = event.item ?: return
-        if (pl.gameMode == GameMode.SPECTATOR) return
-        if (!event.action.isRightClick) return
-        if (!canUse(pl, item)) return
+        if (canUse(pl, item)) event.isCancelled = true else return
+        if ((pl.gameMode == GameMode.SPECTATOR)
+            || !event.action.isRightClick
+            || (pl.location.block.getRelative(BlockFace.DOWN).type != elevatorBlock)
+        ) return
+
         event.isCancelled = true
-        if (pl.location.block.getRelative(BlockFace.DOWN).type != elevatorBlock) return
 
         val cd = item.getEnchantmentLevel(POWER)
         val current = System.currentTimeMillis()
@@ -172,7 +174,7 @@ class IronElevator : SpecialItemBase() {
         return item
     }
 
-    override fun upgrade(item: ItemStack) {
+    override fun onUpgrade(item: ItemStack) {
         setCd(item)
     }
 
@@ -226,7 +228,7 @@ class IronElevator : SpecialItemBase() {
     }
 
     /**
-     *  @return 是否在方块边缘，如是则不传送
+     *  @return 是否在方块边缘
      */
     private fun onCorner(location: Location): Boolean {
         return (abs(location.x - location.x.toInt()) <= 0.2 || abs(location.z - location.z.toInt()) <= 0.2 || abs(

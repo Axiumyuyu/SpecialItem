@@ -3,7 +3,6 @@ package me.axiumyu.specialItem.items
 import me.axiumyu.specialItem.SpecialItem
 import me.axiumyu.specialItem.SpecialItem.Companion.mm
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import org.bukkit.Bukkit.getServer
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -25,29 +24,34 @@ abstract class SpecialItemBase : Listener {
     // --- Properties to be defined by subclasses ---
     abstract val id: String
 
-    abstract val name : String
+    abstract val name: String
     abstract val itemMaterial: Material
     abstract val description: String
+
+    /**
+     * The cost of upgrading the item by a given number of levels.
+     * each enchantment left border is levels when item is 1 level, right border is levels when item is max level
+     */
     abstract val enchantmentRanges: Map<Enchantment, Pair<Int, Int>>
     abstract val maxLevel: Int
 
-    open val price : BigDecimal = 100.toBigDecimal()
+    open val price: BigDecimal = 100.toBigDecimal()
 
     // --- Properties defined by the base class ---
     val permissionNode: String by lazy { "specialitems.item.$id" }
 
     companion object {
         @JvmField
-        val ID_KEY = NamespacedKey(SpecialItem.instance, "special_item_id")
+        val ID_KEY = NamespacedKey(SpecialItem.plugin, "special_item_id")
 
         @JvmField
-        val OWNER_UUID_KEY = NamespacedKey(SpecialItem.instance, "special_item_owner_uuid")
+        val OWNER_UUID_KEY = NamespacedKey(SpecialItem.plugin, "special_item_owner_uuid")
 
         @JvmField
-        val OWNER_NAME_KEY = NamespacedKey(SpecialItem.instance, "special_item_owner_name")
+        val OWNER_NAME_KEY = NamespacedKey(SpecialItem.plugin, "special_item_owner_name")
 
         @JvmField
-        val LEVEL_KEY = NamespacedKey(SpecialItem.instance, "special_item_level")
+        val LEVEL_KEY = NamespacedKey(SpecialItem.plugin, "special_item_level")
 
         @JvmStatic
         fun mapValue(
@@ -57,39 +61,32 @@ abstract class SpecialItemBase : Listener {
         ): List<Double> {
             val (a, b) = srcInterval
             require(a != b) { "Source interval must not be a single point (a != b)" }
-
             val ratio = (x - a) / (b - a)
-
             return targetIntervals.map { (c, d) ->
                 c + ratio * (d - c)
             }
         }
     }
 
-//    abstract fun onUse(event: PlayerEvent)
-
     // --- Abstract methods to be implemented by subclasses ---
     abstract fun calculateUpgradeCost(currentLevel: Int, levelsToUpgrade: Int): Double
 
-    open fun upgrade(item : ItemStack){}
+    /**
+     * this method is called when player upgrades the item.
+     */
+    open fun onUpgrade(item: ItemStack) {}
 
     /**
      * Calculates the enchantments that an item should have at a given level.
+     * this is the default implementation, which uses a linear interpolation between the enchantment ranges.
      * @param newLevel The target level.
      * @return A map of Enchantments to their corresponding levels.
      */
-    open fun mapLevels(newLevel : Int): Map<Enchantment, Int> {
+    open fun mapLevels(newLevel: Int): Map<Enchantment, Int> {
         val source = (1.0 to maxLevel.toDouble())
         val targets = enchantmentRanges.values.map { it.first.toDouble() to it.second.toDouble() }
-        val values = mapValue(newLevel.toDouble(),source,targets)
-
-//        val originalMap = mapOf("a" to 1, "b" to 2, "c" to 3)
-//        val newValues = listOf(10, 20, 30)
-
-//        val newMap = originalMap.mapValues { (_, index) -> newValues[index] }
-
-//        return enchantmentRanges.mapValues { (_, index) ->  values[index].toInt()}
-        return enchantmentRanges.keys.zip(values.map { max(it.toInt(),1) }).toMap()
+        val values = mapValue(newLevel.toDouble(), source, targets)
+        return enchantmentRanges.keys.zip(values.map { max(it.toInt(), 1) }).toMap()
     }
 
     // --- Concrete methods provided by the base class ---
@@ -107,6 +104,7 @@ abstract class SpecialItemBase : Listener {
             val displayName = mm.deserialize(name)
             it.displayName(displayName)
             it.lore(updateLore(player.name, 1))
+            it.setMaxStackSize(1)
         }
         // Get the calculated enchantments for level 1
         val initialEnchants = mapLevels(1)
@@ -119,7 +117,7 @@ abstract class SpecialItemBase : Listener {
 
     fun canUse(player: Player, itemStack: ItemStack?): Boolean {
         itemStack ?: return false
-        if (!isThisTypeOfItem(itemStack)) {
+        if (!isValidItem(itemStack)) {
             return false
         }
 
@@ -141,14 +139,14 @@ abstract class SpecialItemBase : Listener {
 
     fun findItemInInventory(player: Player): ItemStack? {
         for (item in player.inventory.contents) {
-            if (isThisTypeOfItem(item)) {
+            if (isValidItem(item)) {
                 return item
             }
         }
         return null
     }
 
-    fun isThisTypeOfItem(itemStack: ItemStack?): Boolean {
+    fun isValidItem(itemStack: ItemStack?): Boolean {
         if (itemStack == null || itemStack.type == Material.AIR) return false
         val pdc = itemStack.itemMeta?.persistentDataContainer ?: return false
         if (!this.hasFullEnchant(itemStack)) return false
@@ -196,7 +194,7 @@ abstract class SpecialItemBase : Listener {
     }
 
     fun getItemLevel(itemStack: ItemStack): Int {
-        if (!isThisTypeOfItem(itemStack)) return 0
+        if (!isValidItem(itemStack)) return 0
         return itemStack.itemMeta?.persistentDataContainer?.get(LEVEL_KEY, PersistentDataType.INTEGER) ?: 1
     }
 
@@ -207,14 +205,9 @@ abstract class SpecialItemBase : Listener {
         val newLore = listOf(
             mm.deserialize("<aqua>$description</aqua>"),
             Component.empty(),
-            mm.deserialize(
-                "<gray>等级: <yellow><level></yellow>/<max_level>",
-                Placeholder.unparsed("level", level.toString()),
-                Placeholder.unparsed("max_level", maxLevel.toString())
-            ),
+            mm.deserialize("<gray>等级: <yellow>$level</yellow>/$maxLevel"),
             mm.deserialize("<gray>绑定玩家: <yellow>$ownerName</yellow>")
         )
-//        getServer().sendMessage(mm.deserialize("new lore set.level: $level"))
         return newLore
     }
 }

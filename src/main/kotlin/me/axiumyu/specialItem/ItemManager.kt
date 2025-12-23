@@ -1,10 +1,9 @@
 package me.axiumyu.specialItem
 
-import me.axiumyu.specialItem.SpecialItem.Companion.instance
+import me.axiumyu.specialItem.SpecialItem.Companion.plugin
 import me.axiumyu.specialItem.items.SpecialItemBase
 import org.bukkit.Bukkit
 import org.bukkit.event.HandlerList
-import org.bukkit.event.player.PlayerEvent
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
 
@@ -26,21 +25,21 @@ object ItemManager {
      */
     fun register(itemClass: SpecialItemBase) {
         if (registeredItems.containsKey(itemClass.id.lowercase())) {
-            instance.logger.warning("Attempted to register a duplicate SpecialItem with id: ${itemClass.id}")
+            plugin.logger.warning("Attempted to register a duplicate SpecialItem with id: ${itemClass.id}")
             return
         }
         registeredItems[itemClass.id.lowercase()] = itemClass
 
         // Register the item itself as a listener
-        instance.server.pluginManager.registerEvents(itemClass, instance)
+        plugin.server.pluginManager.registerEvents(itemClass, plugin)
 
         // Dynamically register the permission for this item
         try {
             val permission = Permission(itemClass.permissionNode, "Allows usage of the ${itemClass.id} special item.", PermissionDefault.TRUE)
             Bukkit.getPluginManager().addPermission(permission)
-            instance.logger.info("Registered item and listeners for ${itemClass.id}")
+            plugin.logger.info("Registered item and listeners for ${itemClass.id}")
         } catch (_: IllegalArgumentException) {
-            instance.logger.info("Permission for ${itemClass.id} (${itemClass.permissionNode}) already exists.")
+            plugin.logger.info("Permission for ${itemClass.id} (${itemClass.permissionNode}) already exists.")
         }
     }
 
@@ -63,6 +62,6 @@ object ItemManager {
             Bukkit.getPluginManager().removePermission(item.permissionNode)
         }
         registeredItems.clear()
-        instance.logger.info("All special items, listeners, and permissions have been unregistered.")
+        plugin.logger.info("All special items, listeners, and permissions have been unregistered.")
     }
 }

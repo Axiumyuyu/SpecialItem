@@ -63,40 +63,30 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
 
         if (!specialItem.canUse(player, itemInHand)) {
             // The canUse method sends the specific error message
-            player.sendMessage(mm.deserialize("<red>升级失败,请检查物品附魔是否完整"))
+            player.sendMessage(mm.deserialize("<red>升级失败,请检查物品附魔是否完整或物品是否属于你"))
             return
         }
 
         val currentLevel = specialItem.getItemLevel(itemInHand)
         val lvl = if (args.size > 1) args[1].toIntOrNull() ?: 1 else 1
+        if (lvl <= 0) {
+            player.sendMessage(mm.deserialize("<red>升级数量必须大于0。</red>"))
+            return
+        }
         if (currentLevel >= specialItem.maxLevel) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<yellow>你的 <item_id> 已达到最高等级！</yellow>",
-                    Placeholder.unparsed("item_id", specialItem.id)
-                )
-            )
+            player.sendMessage(mm.deserialize("<yellow>你的 ${specialItem.id} 已达到最高等级！</yellow>"))
             return
         }
         if (currentLevel + lvl > specialItem.maxLevel) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<yellow>你的 <item_id> 最高只能达到${specialItem.maxLevel}级！</yellow>",
-                    Placeholder.unparsed("item_id", specialItem.id)
-                )
-            )
+            player.sendMessage(mm.deserialize("<yellow>你的 ${specialItem.id} 最高只能达到${specialItem.maxLevel}级！</yellow>"))
             return
         }
 
         val cost = specialItem.calculateUpgradeCost(currentLevel, lvl).toBigDecimal()
         val playerBal = xc.getPlayerData(player.uniqueId).balance
-
+        val costMsg = xc.getdisplay(cost)
         if (playerBal <= cost) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>升级需要${xc.getdisplay(cost)}，你的余额不足。</red>"
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>升级需要$costMsg ，你的余额不足。</red>"))
             return
         }
 
@@ -105,47 +95,25 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
 
         val newLevel = currentLevel + lvl
 
-//        player.sendMessage("new level :$newLevel")
         upgradeItem(itemInHand, specialItem, player.name, newLevel)
-        player.sendMessage(
-            mm.deserialize(
-                "<green>恭喜！你的 <item_id> 已成功升级到 <level> 级！</green>, 花费了 ${xc.getdisplay(cost)}",
-                Placeholder.unparsed("item_id", specialItem.id),
-                Placeholder.unparsed("level", newLevel.toString())
-            )
-        )
+        player.sendMessage(mm.deserialize("<green>恭喜！你的 ${specialItem.id} 已成功升级到 $newLevel 级！</green>, 花费了 $costMsg",))
     }
 
     private fun handleGetCommand(player: Player, args: Array<out String>, label: String) {
         if (args.size < 2) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>用法: /<label> get <item_id></red>",
-                    Placeholder.unparsed("label", label)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>用法: /$label get <item_id></red>"))
             return
         }
 
         val itemId = args[1]
         val specialItem = ItemManager.getById(itemId)
         if (specialItem == null) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>未知的特殊物品 ID: '<item_id>'</red>",
-                    Placeholder.unparsed("item_id", itemId)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>未知的特殊物品 ID: '$itemId'</red>"))
             return
         }
 
         if (!player.hasPermission(specialItem.permissionNode)) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>你没有权限获取此物品 (<permission_node>)。</red>",
-                    Placeholder.unparsed("permission_node", specialItem.permissionNode)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>你没有权限获取此物品 (${specialItem.permissionNode})。</red>"))
             return
         }
         val bal = xc.getPlayerData(player.uniqueId).balance
@@ -163,57 +131,32 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
         }
 
         xc.changePlayerBalance(player.uniqueId,player.name, price,false)
-        player.sendMessage(
-            mm.deserialize(
-                "<green>你已获得一个 <item_id>!</green>",
-                Placeholder.unparsed("item_id", specialItem.id)
-            )
-        )
+        player.sendMessage(mm.deserialize("<green>你已获得一个 ${specialItem.id}!</green>"))
     }
 
     private fun handleTransferCommand(player: Player, args: Array<out String>, label: String) {
         if (args.size < 2) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>用法: /<label> transfer <item_id> [confirm]</red>",
-                    Placeholder.unparsed("label", label)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>用法: /$label transfer <item_id> [confirm]</red>"))
             return
         }
 
         val itemId = args[1]
         val specialItem = ItemManager.getById(itemId)
         if (specialItem == null) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>未知的特殊物品 ID: '<item_id>'</red>",
-                    Placeholder.unparsed("item_id", itemId)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>未知的特殊物品 ID: '$itemId'</red>"))
             return
         }
 
         if (!player.hasPermission(specialItem.permissionNode)) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>你没有权限转移此物品 (<permission_node>)。</red>",
-                    Placeholder.unparsed("permission_node", specialItem.permissionNode)
-                )
-            )
+            player.sendMessage(mm.deserialize("<red>你没有权限转移此物品 (${specialItem.permissionNode})。</red>"))
             return
         }
 
         val mainHandItem = player.inventory.itemInMainHand
         val offHandItem = player.inventory.itemInOffHand
 
-        if (offHandItem.type == Material.AIR || !specialItem.isThisTypeOfItem(offHandItem)) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<red>你必须将特殊物品 '<item_id>' 拿在副手。</red>",
-                    Placeholder.unparsed("item_id", specialItem.id)
-                )
-            )
+        if (offHandItem.type == Material.AIR || !specialItem.isValidItem(offHandItem)) {
+            player.sendMessage(mm.deserialize("<red>你必须将特殊物品 '${specialItem.id}' 拿在副手。</red>"))
             return
         }
 
@@ -223,6 +166,7 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
         }
 
         if (!specialItem.canUse(player, offHandItem)) {
+            player.sendMessage(mm.deserialize("<red>你不能使用这个物品。</red>"))
             return
         }
         val lvl = specialItem.getItemLevel(offHandItem)
@@ -234,19 +178,9 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
         }
 
         if (args.size < 3 || !args[2].equals("confirm", ignoreCase = true)) {
-            player.sendMessage(
-                mm.deserialize(
-                    "<yellow>警告: 这将覆盖你主手物品 (<item_type>) 上的所有数据，并且会删除原物品，额外消耗$costMsg</yellow>",
-                    Placeholder.unparsed("item_type", mainHandItem.type.toString())
-                )
-            )
+            player.sendMessage(mm.deserialize("<yellow>警告: 这将覆盖你主手物品 (${mainHandItem.type}) 上的所有数据，并且会删除原物品，额外消耗$costMsg</yellow>"))
             player.sendMessage(mm.deserialize("<yellow>要继续，请在命令末尾加上 'confirm' 并重新运行：</yellow>"))
-            player.sendMessage(
-                mm.deserialize(
-                    "<aqua>/<label> transfer <item_id> confirm</aqua>",
-                    Placeholder.unparsed("label", label), Placeholder.unparsed("item_id", itemId)
-                )
-            )
+            player.sendMessage(mm.deserialize("<aqua>/$label transfer $itemId confirm</aqua>"))
             return
         }
 
@@ -254,34 +188,14 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
         xc.changePlayerBalance(player.uniqueId, player.name, cost, false)
         player.inventory.setItemInMainHand(newMainHandItem)
         player.inventory.setItemInOffHand(null)
-        player.sendMessage(
-            mm.deserialize(
-                "<green>成功消耗$costMsg 将 '<item_id>' 的灵魂转移到了你的新物品上！</green>",
-                Placeholder.unparsed("item_id", specialItem.id)
-            )
-        )
+        player.sendMessage(mm.deserialize("<green>成功消耗$costMsg 将 '${specialItem.id}' 的灵魂转移到了你的新物品上！</green>"))
     }
 
     private fun sendHelpMessage(sender: CommandSender, label: String) {
         sender.sendMessage(mm.deserialize("<gold>--- SpecialItems 帮助 ---</gold>"))
-        sender.sendMessage(
-            mm.deserialize(
-                "<aqua>/<label> get <item_id></aqua> <gray>- 获取一个新的特殊物品。</gray>",
-                Placeholder.unparsed("label", label)
-            )
-        )
-        sender.sendMessage(
-            mm.deserialize(
-                "<aqua>/<label> transfer <item_id> [confirm]</aqua> <gray>- 转移一个特殊物品的灵魂。</gray>",
-                Placeholder.unparsed("label", label)
-            )
-        )
-        sender.sendMessage(
-            mm.deserialize(
-                "<aqua>/<label> upgrade</aqua> <gray>- 升级你主手中的特殊物品。</gray>",
-                Placeholder.unparsed("label", label)
-            )
-        )
+        sender.sendMessage(mm.deserialize("<aqua>/$label get <item_id></aqua> <gray>- 获取一个新的特殊物品。</gray>"))
+        sender.sendMessage(mm.deserialize("<aqua>/$label transfer <item_id> [confirm]</aqua> <gray>- 转移一个特殊物品的灵魂。</gray>"))
+        sender.sendMessage(mm.deserialize("<aqua>/$label upgrade</aqua> <gray>- 升级你主手中的特殊物品。</gray>"))
     }
 
     override fun onTabComplete(
@@ -303,13 +217,11 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
             2 -> {
                 val subCommand = args[0].lowercase()
                 if (subCommand == "get" || subCommand == "transfer") {
-                    ItemManager.getAllIds().forEach { id ->
-                        if (id.startsWith(
-                                args[1],
-                                ignoreCase = true
-                            ) && sender.hasPermission("specialitems.item.$id")
+                    ItemManager.getAllIds().forEach {
+                        if (it.startsWith(args[1], true)
+                            && sender.hasPermission("specialitems.item.$it")
                         ) {
-                            completions.add(id)
+                            completions.add(it)
                         }
                     }
                 }
@@ -337,6 +249,6 @@ class SpecialItemCommand : CommandExecutor, TabCompleter {
         val newEnchants = source.mapLevels(newLevel)
         item.removeEnchantments()
         item.addUnsafeEnchantments(newEnchants)
-        source.upgrade(item)
+        source.onUpgrade(item)
     }
 }

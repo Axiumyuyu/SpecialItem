@@ -10,6 +10,7 @@ import org.bukkit.enchantments.Enchantment.POWER
 import org.bukkit.entity.Item
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.ItemStack
 import kotlin.collections.contains
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -32,6 +33,18 @@ class ItemMagnet : SpecialItemBase() {
         Enchantment.QUICK_CHARGE to (90 to 1)
     )
     override val maxLevel: Int = 90
+
+    override fun calculateUpgradeCost(currentLevel: Int, levelsToUpgrade: Int): Double {
+        var cost = 0.0
+        var lvl = currentLevel
+        repeat(levelsToUpgrade) {
+            cost += lvl + Random.nextInt(lvl) + sqrt(lvl.toDouble() * 2) + 8
+            lvl++
+        }
+        return cost
+    }
+
+
 
     @EventHandler
     fun onUse(event: PlayerInteractEvent) {
@@ -57,15 +70,5 @@ class ItemMagnet : SpecialItemBase() {
         items.forEach {
             it.teleport(pl.location)
         }
-    }
-
-    override fun calculateUpgradeCost(currentLevel: Int, levelsToUpgrade: Int): Double {
-        var cost = 0.0
-        var lvl = currentLevel
-        repeat(levelsToUpgrade) {
-            cost += lvl + Random.nextInt(lvl) + sqrt(lvl.toDouble() * 2) + 8
-            lvl++
-        }
-        return cost
     }
 }
