@@ -1,3 +1,6 @@
+语言： 中文 | [English](README_en.md)
+
+
 # SpecialItem
 
 一个 **Minecraft Paper 插件（Kotlin）**，用于实现**可升级+绑定玩家的特殊物品系统**。
@@ -183,3 +186,4 @@ build/libs/SpecialItem-X.X.X.jar
 ## 许可
 
 所有源代码遵循MIT协议。
+
