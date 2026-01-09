@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "me.axiumyu.specialitem"
-version = "1.1.2"
+version = "1.2.1"
 
 repositories {
     mavenCentral()
