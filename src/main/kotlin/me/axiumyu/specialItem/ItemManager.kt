@@ -3,6 +3,7 @@ package me.axiumyu.specialItem
 import me.axiumyu.specialItem.SpecialItem.Companion.plugin
 import me.axiumyu.specialItem.items.SpecialItemBase
 import org.bukkit.Bukkit
+import org.bukkit.Bukkit.getPluginManager
 import org.bukkit.event.HandlerList
 import org.bukkit.permissions.Permission
 import org.bukkit.permissions.PermissionDefault
@@ -31,12 +32,12 @@ object ItemManager {
         registeredItems[itemClass.id.lowercase()] = itemClass
 
         // Register the item itself as a listener
-        plugin.server.pluginManager.registerEvents(itemClass, plugin)
+        getPluginManager().registerEvents(itemClass, plugin)
 
         // Dynamically register the permission for this item
         try {
             val permission = Permission(itemClass.permissionNode, "Allows usage of the ${itemClass.id} special item.", PermissionDefault.TRUE)
-            Bukkit.getPluginManager().addPermission(permission)
+            getPluginManager().addPermission(permission)
             plugin.logger.info("Registered item and listeners for ${itemClass.id}")
         } catch (_: IllegalArgumentException) {
             plugin.logger.info("Permission for ${itemClass.id} (${itemClass.permissionNode}) already exists.")
@@ -59,7 +60,7 @@ object ItemManager {
             // Unregister the listener
             HandlerList.unregisterAll(item)
             // Remove the permission
-            Bukkit.getPluginManager().removePermission(item.permissionNode)
+            getPluginManager().removePermission(item.permissionNode)
         }
         registeredItems.clear()
         plugin.logger.info("All special items, listeners, and permissions have been unregistered.")

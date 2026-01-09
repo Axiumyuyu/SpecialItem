@@ -2,24 +2,19 @@ package me.axiumyu.specialItem.items.impl
 
 import me.axiumyu.specialItem.SpecialItem.Companion.mm
 import me.axiumyu.specialItem.items.SpecialItemBase
-import me.axiumyu.specialItem.items.impl.IronElevator.Companion.coolDownList
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.enchantments.Enchantment.POWER
 import org.bukkit.entity.Item
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.inventory.ItemStack
-import kotlin.collections.contains
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-class ItemMagnet : SpecialItemBase() {
-    companion object {
-        @JvmField
-        val coolDownList = mutableMapOf<String, Long>()
-    }
+object ItemMagnet : SpecialItemBase() {
+    @JvmField
+    val coolDownList = mutableMapOf<String, Long>()
+
     override val id: String = "item_magnet"
     override val name: String = "物品磁铁"
     override val itemMaterial: Material = Material.BOWL
@@ -43,8 +38,6 @@ class ItemMagnet : SpecialItemBase() {
         }
         return cost
     }
-
-
 
     @EventHandler
     fun onUse(event: PlayerInteractEvent) {

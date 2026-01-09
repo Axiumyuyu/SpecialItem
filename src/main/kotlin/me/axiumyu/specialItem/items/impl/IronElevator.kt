@@ -21,64 +21,16 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-class IronElevator : SpecialItemBase() {
-    companion object {
-        @JvmField
-        val SAFE_BLOCK = hashSetOf(
-            WATER,
-            WHITE_CARPET,
-            LIGHT_GRAY_CARPET,
-            GRAY_CARPET,
-            BLACK_CARPET,
-            BLUE_CARPET,
-            BROWN_CARPET,
-            CYAN_CARPET,
-            GREEN_CARPET,
-            LIGHT_BLUE_CARPET,
-            LIME_CARPET,
-            MAGENTA_CARPET,
-            ORANGE_CARPET,
-            PINK_CARPET,
-            PURPLE_CARPET,
-            RED_CARPET,
-            OAK_TRAPDOOR,
-            SPRUCE_TRAPDOOR,
-            BIRCH_TRAPDOOR,
-            JUNGLE_TRAPDOOR,
-            ACACIA_TRAPDOOR,
-            DARK_OAK_TRAPDOOR,
-            CRIMSON_TRAPDOOR,
-            WARPED_TRAPDOOR,
-            OAK_FENCE_GATE,
-            SPRUCE_FENCE_GATE,
-            BIRCH_FENCE_GATE,
-            JUNGLE_FENCE_GATE,
-            ACACIA_FENCE_GATE,
-            DARK_OAK_FENCE_GATE,
-            CRIMSON_FENCE_GATE,
-            WARPED_FENCE_GATE,
-            OAK_DOOR,
-            SPRUCE_DOOR,
-            BIRCH_DOOR,
-            JUNGLE_DOOR,
-            ACACIA_DOOR,
-            DARK_OAK_DOOR,
-            CRIMSON_DOOR,
-            WARPED_DOOR,
-            MOSS_CARPET,
-            PALE_OAK_FENCE_GATE,
-            PALE_MOSS_CARPET,
-        )
+object IronElevator : SpecialItemBase() {
 
-        @JvmField
-        val elevatorBlock = IRON_BLOCK
+    @JvmField
+    val elevatorBlock = IRON_BLOCK
 
-        @JvmField
-        val teleportSound: Sound = Sound.ENTITY_IRON_GOLEM_ATTACK
+    @JvmField
+    val teleportSound: Sound = Sound.ENTITY_IRON_GOLEM_ATTACK
 
-        @JvmField
-        val coolDownList: MutableMap<String, Long> = mutableMapOf<String, Long>()
-    }
+    @JvmField
+    val coolDownList: MutableMap<String, Long> = mutableMapOf()
 
     override val id: String = "elevator"
     override val name: String = "铁块电梯控制器"
@@ -224,15 +176,7 @@ class IronElevator : SpecialItemBase() {
      * @return 是否为安全方块
      */
     private fun checkBlock(block: Block): Boolean {
-        return (!block.isCollidable || SAFE_BLOCK.contains(block.type))
+        return (!block.isCollidable || block.isPassable || !block.isSuffocating)
     }
 
-    /**
-     *  @return 是否在方块边缘
-     */
-    private fun onCorner(location: Location): Boolean {
-        return (abs(location.x - location.x.toInt()) <= 0.2 || abs(location.z - location.z.toInt()) <= 0.2 || abs(
-            location.x - location.x.toInt()
-        ) >= 0.8 || abs(location.z - location.z.toInt()) >= 0.8 || abs(location.y - location.y.toInt()) > 0.5)
-    }
 }

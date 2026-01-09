@@ -3,6 +3,7 @@ package me.axiumyu.specialItem.items.impl
 import me.axiumyu.specialItem.SpecialItem.Companion.mm
 import me.axiumyu.specialItem.items.SpecialItemBase
 import org.bukkit.Bukkit
+import org.bukkit.Bukkit.getPluginManager
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
@@ -17,7 +18,7 @@ import java.lang.Math.toRadians
 import kotlin.math.*
 import kotlin.random.Random
 
-class WindStaff : SpecialItemBase() {
+object WindStaff : SpecialItemBase() {
     override val id: String = "wind_staff"
     override val name: String = "风之法杖"
     override val itemMaterial: Material = Material.BREEZE_ROD
@@ -70,7 +71,7 @@ class WindStaff : SpecialItemBase() {
         vec.x = (2 - exact) * sin(toRadians(yaw)) + 0.15 * vec.x
         vec.y = -2 * sin(toRadians(pitch)) + 0.05 * vec.y
         vec.z = (exact - 2) * cos(toRadians(yaw)) + 0.15 * vec.z
-        pl.velocity = vec.multiply(fallingLvl / 30)
+        pl.velocity = vec.multiply(fallingLvl / 45.0)
     }
 
     override fun calculateUpgradeCost(currentLevel: Int, levelsToUpgrade: Int): Double {
@@ -101,7 +102,7 @@ class WindStaff : SpecialItemBase() {
 
         // 2. 触发事件
         // 这会让所有插件（WorldGuard, Residence等）处理该事件
-        Bukkit.getPluginManager().callEvent(breakEvent)
+        getPluginManager().callEvent(breakEvent)
 
         // 3. 检查结果
         // 如果 isCancelled 为 true，说明有插件禁止了该操作

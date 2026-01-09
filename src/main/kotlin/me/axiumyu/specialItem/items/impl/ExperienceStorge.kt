@@ -16,12 +16,10 @@ import org.bukkit.persistence.PersistentDataType.LONG
 import java.math.BigDecimal
 import kotlin.random.Random
 
-class ExperienceStorge : SpecialItemBase() {
+object ExperienceStorge : SpecialItemBase() {
 
-    companion object {
-        @JvmField
-        val EXP_STORED = NamespacedKey(SpecialItem.plugin, "exp")
-    }
+    @JvmField
+    val EXP_STORED = NamespacedKey(SpecialItem.plugin, "exp")
 
     override val id: String = "experience_storge"
     override val name: String = "经验池"
@@ -66,7 +64,7 @@ class ExperienceStorge : SpecialItemBase() {
             it[EXP_STORED, LONG] = 0
         }
         val lore = item.lore()!!.toMutableList()
-        lore.add(mm.deserialize("temp"))
+        lore.add(mm.deserialize("<black>喵"))
         item.lore(lore)
         updateLore(item)
         return item
@@ -78,7 +76,6 @@ class ExperienceStorge : SpecialItemBase() {
         val pl = ev.player
         if (pl.gameMode == GameMode.SPECTATOR) return
         if (canUse(pl, item)) ev.isCancelled = true else return
-
 
         val storedExp = item.persistentDataContainer[EXP_STORED, LONG] ?: 0
         val operationExp = item.getEnchantmentLevel(Enchantment.UNBREAKING) * 20
